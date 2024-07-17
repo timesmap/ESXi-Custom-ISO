@@ -21,12 +21,14 @@ $baseESXiVer = "6.7"
 # Define Fling archive source link
 $flingUrl = "https://raw.githubusercontent.com/itiligent/ESXi-Custom-ISO/main/6.7-updates/"
 $usbFling = "ESXi670-VMKUSB-NIC-FLING-39203948-offline_bundle-16780994.zip"
+$2024034001Url = "https://api.onedrive.com/v1.0/shares/s!Asccp3ag4RnQj7xd8Pes4eJTZhQVfg/root/content" # Provide your own update file and adjust link here
+$2024034001Update = "ESXi670-202403001.zip"
 $realtek8168 = "net55-r8168-8.045a-napi-offline_bundle.zip"
 $intelnic = "net-igb-5.3.2-99-offline_bundle.zip"
 $nvmeFling = "nvme-community-driver_1.0.1.0-1vmw.670.0.0.8169922-offline_bundle-17658145.zip"
 
 # Define Ghetto VCB repo for latest release download via Github API
-$releaseUrl = "https://api.github.com/repos/lamw/ghettoVCB/releases/latest"
+$ghettoUrl = "https://api.github.com/repos/lamw/ghettoVCB/releases/latest"
 $ghettoVCB = "vghetto-ghettoVCB-offline-bundle-7x.zip"
 
 # Set up user agent to avoid GitHub API rate limiting issues
@@ -35,7 +37,7 @@ $headers = @{
 } | Out-Null
 
 # Fetch the latest release information from GitHub API
-$response = Invoke-RestMethod -Uri $releaseUrl -Headers $headers
+$response = Invoke-RestMethod -Uri $ghettoUrl -Headers $headers
 
 # Extract the download URL for the specific asset
 $ghettoDownloadUrl = $response.assets | Where-Object { $_.name -eq $ghettoVCB } | Select-Object -ExpandProperty browser_download_url
@@ -44,12 +46,19 @@ $ghettoDownloadUrl = $response.assets | Where-Object { $_.name -eq $ghettoVCB } 
 Invoke-WebRequest -Uri $ghettoDownloadUrl -OutFile $ghettoVCB
 
 echo ""
-echo "Retrieving latest ESXi $baseESXiVer bundle, this may take a while..."
+echo "Retrieving ESXi $baseESXiVer installation bundles to choose from, this may take a while..."
 echo ""
 
+# TESTING: Add to the list of profiles by separately downloading the restricted 202403400 update See: https://docs.vmware.com/en/VMware-vSphere/6.7/rn/esxi670-202403001.html
+# (SHA256 sums match VMmware docs)
+if (!(Test-Path $2024034001Update)){Invoke-WebRequest -Uri $2024034001Url -OutFile $($2024034001Update)}
+Add-EsxSoftwareDepot $2024034001Update
+
+# Grab the list of publically available image profiles from VMware 
 Add-EsxSoftwareDepot https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/vmw-depot-index.xml
 $imageProfiles = Get-EsxImageProfile | Where-Object { $_.Name -like "ESXi-$baseESXiVer*-standard*" } | Sort-Object -Descending -Property @{Expression={$_.Name.Substring(0,10)}},@{Expression={$_.CreationTime.Date}},Name
-
+1
+echo ""
 # Print a list of available profiles to choose from
 for ($i = 0; $i -lt $imageProfiles.Count; $i++) {
     echo "$($i + 1). $($imageProfiles[$i].Name)"
@@ -63,7 +72,7 @@ do {
 $imageProfile = $imageProfiles[$selection - 1].Name
 
 echo ""
-echo "Downloading $imageProfile"
+echo "Downloading $imageProfile and exporting to an image bundle "
 echo ""
 
 if (!(Test-Path "$($imageProfile).zip")){Export-ESXImageProfile -ImageProfile $imageProfile -ExportToBundle -filepath "$($imageProfile).zip"}

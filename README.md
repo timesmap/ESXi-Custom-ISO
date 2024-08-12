@@ -4,7 +4,7 @@
 - Each script will present a menu to select which patch level to build your new ISO.
 
 ### [esxi8.ps1](https://github.com/itiligent/ESXi-Custom-ISO/blob/main/esxi8.ps1) 
-- Builds an ESXi 8.x iso with latest NVME & USB NIC Fling drivers + latest GhettoVCB backup. (The VMware Community NIC Fling was built in to 8.x, so no need to add this.)
+- Builds an ESXi 8.x iso with latest NVME & USB NIC Fling drivers + latest GhettoVCB backup. (The VMware Community NIC Fling is built-in from 8.x)
 	- _For earlier 800, 80U1 or 80U2 builds, see script notes to select the correct USB NIC Fling_
 
 ### [esxi7.ps1](https://github.com/itiligent/ESXi-Custom-ISO/blob/main/esxi7.ps1)
@@ -22,34 +22,27 @@ Set-ExecutionPolicy Unrestricted -Scope CurrentUser #(and select All)
 To restore default policy: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser 
 ````
 
-2. (For ESXi 7 & 8 ISOs, skip this step) For 6.7 ISOs you must OFFLINE INSTALL **PowerCLI 12.7.0** using the method shown below. [Download it here](https://developer.vmware.com/web/tool/12.7.0/vmware-powercli/). After install, simply run the esxi6.7.ps1 script. ESXi 6.x ISOs DO NOT REQUIRE PYTHON INSTALLATION. 
+2. (For ESXi 7 & 8 ISOs, GO TO STEP 3) For 6.7 ISOs you must OFFLINE INSTALL **PowerCLI 12.7.0** using the method shown below. [Download it here](https://developer.vmware.com/web/tool/12.7.0/vmware-powercli/). (PowerCLi 12.7.0 is the last Powercli version before Python became an extra requirement) 
 ```
-# If a PowerCLI version later than 12.7.0 is already installed, remove this first with:
-    Get-Module VMware.PowerCLI -ListAvailable).RequiredModules | Uninstall-Module -Force
-# Next, extract all the contents of the PowerCLI zip (a bunch of VMware.xxx directories) and copy these into the below path.
-    %ProgramFiles%\WindowsPowerShell\Modules 
-# Unblock the new PowerCLI module files  
+a. Start with a FRESH Windows system without Powercli ever being installed (Powercli's uninstaller does not appear to remove everything):
+b. Extract all the contents of the PowerCLI zip to %ProgramFiles%\WindowsPowerShell\Modules 
+c. Unblock the new PowerCLI module files with this PS command:  
     Get-ChildItem -Path $env:PROGRAMFILES\WindowsPowerShell\Modules\ -Recurse | Unblock-File 
+d. Run the esxi6.7.ps1 script
 ```
-
-For ESXi 7.x and 8.x ISOs only, you must install the CURRENT version of VMware PowerCLI and Python > 3.7.1
-```
-Install-Module VMware.PowerCLI -Scope CurrentUser 
-Select Y to install from untrusted repo.  Install might take a long while
-```
-
  
-3. To install Python 3.7.9 [download it here](https://www.python.org/downloads/release/python-379/) (3.7.9 is shown to be stable, some versions are more buggy):
+3. For ESXi 7.x and 8.x ISOs: you must install the CURRENT version of VMware PowerCLI and Python > 3.7.1 [download it here](https://www.python.org/downloads)
 ```
-Run the installer and check "Add Python to PATH" a the start of the install, and at the end of the install, select "Disable path length limit". 
+a. Run the Python installer and check "Add Python to PATH" a the start of the install, then at the end of the install, select "Disable path length limit". 
+b. In Powershell: Install-Module VMware.PowerCLI -Scope CurrentUser (Select Y to install from untrusted repo)
 ```
 
-4. Next upgrade Python PIP via Command prompt (assumes 64 bit):
+4. Upgrade Python PIP via Command prompt (assumes 64 bit):
 ```
 C:\Users\%username%\AppData\Local\Programs\Python\Python37\python.exe -m pip install --upgrade pip
 ```
 
-5. Add the extra Python dependencies for PowerCLI via Command prompt (assumes 64 bit):
+5. Add Python dependencies for PowerCLI via Command prompt (assumes 64 bit):
 ```
 C:\Users\%username%\AppData\Local\Programs\Python\Python37\Scripts\pip3.7.exe install six psutil lxml pyopenssl
 ```
@@ -60,10 +53,10 @@ Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $false
 Set-PowerCLIConfiguration -PythonPath C:\Users\$env:USERNAME\AppData\Local\Programs\Python\Python37\python.exe
 ```
 
-7. **Now you can run the script to start creating your own custom ISO!**  🚀
+7. **Run esxi7.ps1 or esxi8.ps1 to start creating your custom ISO!**  🚀
 
 - Zimaboard users note:
-  - You may need to set full duplex on ESXi NIC & physical switch for better performance.
+  - Full duplex on the ESXi NIC & physical switch may give better performance, your milage may vary.
   - Zimaboard's optional RTL 8125 2.5GbE NIC driver for ESXi 6.7 can be found [here](https://github.com/itiligent/ESXi-Custom-ISO/raw/main/6.7-drivers/net-r8125-9.011.00-10.vib)
     - To manually install 2.5GbE driver:`esxcli software vib install -v net-r8125-9.011.00-10.vib`
     - To manually remove 2.5GbE driver: `esxcli software vib remove -n net-r8125`
@@ -72,5 +65,6 @@ Set-PowerCLIConfiguration -PythonPath C:\Users\$env:USERNAME\AppData\Local\Progr
   <img src="https://github.com/itiligent/ESXi-Custom-ISO/blob/main/6.7-updates/esxi-zimaboard-screenshot.PNG" width="750" alt="Screenshot">
 </p>
 
-- After Broadcom's acquisition of VMWare in October 2023, the VMware Flings community download site was taken offline. The Community Flings appear to have been rolled into the Broadcom universe, but Flings now require a Broadcom user account to access. A copy of the original (archived) flings.vmware.com site can also be found at https://archive.org/details/flings.vmware.com.
-- The ESXi 6.7 script's additional Zimaboard RTL8168 NIC drivers were sourced from [here](https://vibsdepot.v-front.de). Optional RTL 8125 2.5GBe vibs for use with ESXi 6.7 were sourced from [here](https://github.com/mcr-ksh/r8125-esxi).
+- VMware Community Flings have been moved into the Broadcom universe at https://community.broadcom.com/flings/home
+- The ESXi 6.7 script's Zimaboard RTL8168 NIC drivers were sourced from https://vibsdepot.v-front.de
+- Optional RTL 8125 2.5GBe vibs for use with ESXi 6.7 were sourced from https://github.com/mcr-ksh/r8125-esxi

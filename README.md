@@ -16,44 +16,36 @@
 
 ### 🛠️ Instructions for building ESXi ISOs:
 
+```
 1. Ensure your local Powershell script policy will allow you to run PS scripts.
-````
-Set-ExecutionPolicy Unrestricted -Scope CurrentUser #(and select All)
-To restore default policy: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser 
-````
+	Set-ExecutionPolicy Unrestricted -Scope CurrentUser # and select All
+		To restore default policy: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser 
 
-2. (For ESXi 7 & 8 ISOs, GO TO STEP 3) For 6.7 ISOs you must OFFLINE INSTALL **PowerCLI 12.7.0** using the method shown below. [Download it here](https://developer.vmware.com/web/tool/12.7.0/vmware-powercli/). (PowerCLi 12.7.0 is the last Powercli version before Python became an extra requirement) 
-```
-a. Start with a FRESH Windows system without Powercli ever being installed (Powercli's uninstaller does not appear to remove everything):
-b. Extract all the contents of the PowerCLI zip to %ProgramFiles%\WindowsPowerShell\Modules 
-c. Unblock the new PowerCLI module files with this PS command:  
-    Get-ChildItem -Path $env:PROGRAMFILES\WindowsPowerShell\Modules\ -Recurse | Unblock-File 
-d. Run the esxi6.7.ps1 script
-```
+2. (For ESXi 7 & 8 ISOs, GO TO STEP 3)
+	For 6.7 ISOs you must OFFLINE INSTALL PowerCLI 12.7.0 using the method shown below.
+		Download it here: https://developer.vmware.com/web/tool/12.7.0/vmware-powercli
+		a. Start with a FRESH Windows system (Powercli's uninstaller does not appear to remove everything)
+		b. Extract contents of PowerCLI zip to %ProgramFiles%\WindowsPowerShell\Modules 
+		c. Run: Get-ChildItem -Path $env:PROGRAMFILES\WindowsPowerShell\Modules\ -Recurse | Unblock-File 
+		d. Run the esxi6.7.ps1 script so build the 6.7 ISO.
  
-3. For ESXi 7.x and 8.x ISOs: you must install the CURRENT version of VMware PowerCLI and Python > 3.7.1 [download it here](https://www.python.org/downloads)
-```
-a. Run the Python installer and check "Add Python to PATH" a the start of the install, then at the end of the install, select "Disable path length limit". 
-b. In Powershell: Install-Module VMware.PowerCLI -Scope CurrentUser (Select Y to install from untrusted repo)
-```
+3. For ESXi 7.x and 8.x ISOs: install the CURRENT version of VMware PowerCLI and Python
+	a. Run the Python installer and check "Add Python to PATH" a the start of the install, t
+	b. At the end of the Python install, select "Disable path length limit". 
+	c. Run: Install-Module VMware.PowerCLI -Scope CurrentUser # Select Y to install from untrusted repo
 
-4. Upgrade Python PIP via Command prompt (assumes 64 bit):
-```
-C:\Users\%username%\AppData\Local\Programs\Python\Python37\python.exe -m pip install --upgrade pip
-```
+4. Upgrade Python PIP:
+	C:\Users\%username%\AppData\Local\Programs\Python\Python37\python.exe -m pip install --upgrade pip
 
-5. Add Python dependencies for PowerCLI via Command prompt (assumes 64 bit):
-```
-C:\Users\%username%\AppData\Local\Programs\Python\Python37\Scripts\pip3.7.exe install six psutil lxml pyopenssl
-```
+5. Add Python dependencies for PowerCLI
+	C:\Users\%username%\AppData\Local\Programs\Python\Python37\Scripts\pip3.7.exe install six psutil lxml pyopenssl
 
-6. Adjust the PowerCLI python.exe path and Customer Improvement Program settings (assumes 64 bit):
-```
-Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $false
-Set-PowerCLIConfiguration -PythonPath C:\Users\$env:USERNAME\AppData\Local\Programs\Python\Python37\python.exe
-```
+6. Adjust the PowerCLI python.exe path and Customer Improvement Program settings
+	Set-PowerCLIConfiguration -Scope User -ParticipateInCEIP $false
+	Set-PowerCLIConfiguration -PythonPath C:\Users\$env:USERNAME\AppData\Local\Programs\Python\Python37\python.exe
 
-7. **Run esxi7.ps1 or esxi8.ps1 to start creating your custom ISO!**  🚀
+7. Run esxi7.ps1 or esxi8.ps1 to build your ISO
+```
 
 - Zimaboard users note:
   - Full duplex on the ESXi NIC & physical switch may give better performance, your milage may vary.
